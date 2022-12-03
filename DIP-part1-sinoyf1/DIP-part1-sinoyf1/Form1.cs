@@ -23,6 +23,12 @@ namespace DIP_part1_sinoyf1
             openFileDialog1.ShowDialog();
         }
 
+        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
+        {
+            loaded = new Bitmap(openFileDialog1.FileName);
+            pictureBox1.Image = loaded;
+        }
+
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveFileDialog1.ShowDialog();
