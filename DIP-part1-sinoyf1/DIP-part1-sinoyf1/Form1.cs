@@ -56,6 +56,21 @@ namespace DIP_part1_sinoyf1
         }
 
         // DIP
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            processed = new Bitmap(loaded.Width, loaded.Height);
+
+            for (int x = 0; x < loaded.Width; x++)
+            {
+                for (int y = 0; y < loaded.Height; y++)
+                {
+                    pixel = loaded.GetPixel(x, y);
+                    processed.SetPixel(x, y, pixel);
+                }
+            }
+            pictureBox2.Image = processed;
+        }
+        
         private void greyscaleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             processed = new Bitmap(loaded.Width, loaded.Height);
@@ -67,21 +82,6 @@ namespace DIP_part1_sinoyf1
                     pixel = loaded.GetPixel(x, y);
                     grey = (pixel.R + pixel.G + pixel.B) / 3;
                     processed.SetPixel(x, y, Color.FromArgb(grey, grey, grey));
-                }
-            }
-            pictureBox2.Image = processed;
-        }
-
-        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            processed = new Bitmap(loaded.Width, loaded.Height);
-
-            for (int x = 0; x < loaded.Width; x++)
-            {
-                for (int y = 0; y < loaded.Height; y++)
-                {
-                    pixel = loaded.GetPixel(x, y);
-                    processed.SetPixel(x, y, pixel);
                 }
             }
             pictureBox2.Image = processed;
