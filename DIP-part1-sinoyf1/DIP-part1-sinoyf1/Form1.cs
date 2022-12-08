@@ -1,19 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using WebCamLib;
 
 namespace DIP_part1_sinoyf1
 {
     public partial class Form1 : Form
     {
-        Bitmap loaded, loadedBackground, processed;
+        Bitmap loaded, loadedBackground, processed, fakeImage, b;
+        Device[] cameras;
+        Image bmap;
+        IDataObject data;
+        Color pixel, backPixel, greyColor, green, changed;
+        int grey, greygreen, threshold, subtractValue;
+        int[] histdata;
+        double tr, tg, tb;
+
         public Form1()
         {
             InitializeComponent();
@@ -22,6 +25,7 @@ namespace DIP_part1_sinoyf1
             saveFileDialog1.AddExtension = true;
         }
 
+        // Dialogs
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
             loaded = new Bitmap(openFileDialog1.FileName);
@@ -39,16 +43,29 @@ namespace DIP_part1_sinoyf1
             pictureBox2.Image.Save(saveFileDialog1.FileName);
         }
 
+
+        // Camera Process
+        private void subtractionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            timerSubtraction.Enabled = true;
+        }
+
+        private void stopToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            timerSubtraction.Enabled = false;
+        }
+
+        // DIP
         private void greyscaleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             processed = new Bitmap(loaded.Width, loaded.Height);
 
-            for(int x = 0; x < loaded.Width; x++)
+            for (int x = 0; x < loaded.Width; x++)
             {
-                for(int y = 0; y < loaded.Height; y++)
+                for (int y = 0; y < loaded.Height; y++)
                 {
-                    Color pixel = loaded.GetPixel(x, y);
-                    int grey = (pixel.R + pixel.G + pixel.B) / 3;
+                    pixel = loaded.GetPixel(x, y);
+                    grey = (pixel.R + pixel.G + pixel.B) / 3;
                     processed.SetPixel(x, y, Color.FromArgb(grey, grey, grey));
                 }
             }
@@ -63,7 +80,7 @@ namespace DIP_part1_sinoyf1
             {
                 for (int y = 0; y < loaded.Height; y++)
                 {
-                    Color pixel = loaded.GetPixel(x, y);
+                    pixel = loaded.GetPixel(x, y);
                     processed.SetPixel(x, y, pixel);
                 }
             }
@@ -78,7 +95,7 @@ namespace DIP_part1_sinoyf1
             {
                 for (int y = 0; y < loaded.Height; y++)
                 {
-                    Color pixel = loaded.GetPixel(x, y);
+                    pixel = loaded.GetPixel(x, y);
                     processed.SetPixel(x, y, 
                         Color.FromArgb(255-pixel.R, 255 - pixel.G, 255 - pixel.B));
                 }
@@ -88,34 +105,29 @@ namespace DIP_part1_sinoyf1
 
         private void histogramToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Color pixel;
-            Bitmap fakeImage =  new Bitmap(loaded);
+            fakeImage =  new Bitmap(loaded);
 
-            // Greyscale Convertion;
             for (int x = 0; x < fakeImage.Width; x++)
             {
                 for (int y = 0; y < fakeImage.Height; y++)
                 {
                     pixel = fakeImage.GetPixel(x, y);
-                    int greyData = ((pixel.R + pixel.G + pixel.B) / 3);
-                    Color grey = Color.FromArgb(greyData, greyData, greyData);
-                    fakeImage.SetPixel(x, y, grey);
+                    grey = ((pixel.R + pixel.G + pixel.B) / 3);
+                    greyColor = Color.FromArgb(grey, grey, grey);
+                    fakeImage.SetPixel(x, y, greyColor);
                 }
             }
 
-            // Histogram 1d Data;
-            int[] histdata = new int[256]; // array from 0 to 255
+            histdata = new int[256];
             for (int x = 0; x < fakeImage.Width; x++)
             {
                 for (int y = 0; y < fakeImage.Height; y++)
                 {
                     pixel = fakeImage.GetPixel(x, y);
-                    histdata[pixel.R]++; // can be any color property r,g or b
+                    histdata[pixel.R]++; 
                 }
             }
 
-            // Bitmap Graph Generation
-            // Setting empty Bitmap with background color
             processed = new Bitmap(256, 800);
             for (int x = 0; x < processed.Width; x++)
             {
@@ -124,7 +136,7 @@ namespace DIP_part1_sinoyf1
                     processed.SetPixel(x, y, Color.White);
                 }
             }
-            // Plotting points based from histdata
+          
             for (int x = 0; x < processed.Width; x++)
             {
                 for (int y = 0; y < Math.Min(histdata[x] / 5, processed.Height - 1); y++)
@@ -143,43 +155,33 @@ namespace DIP_part1_sinoyf1
             {
                 for (int y = 0; y < loaded.Height; y++)
                 {
-                    Color pixel = loaded.GetPixel(x, y);
-                    double tr = 0.393 * pixel.R + 0.769 * pixel.G + 0.189 * pixel.B;
-                    double tg = 0.349 * pixel.R + 0.686 * pixel.G + 0.168 * pixel.B;
-                    double tb = 0.272 * pixel.R + 0.534 * pixel.G + 0.131 * pixel.B;
-                    Color changed = Color.FromArgb((int)Math.Min(tr, 255), (int)Math.Min(tg, 255), (int)Math.Min(tb, 255));
+                    pixel = loaded.GetPixel(x, y);
+                    tr = 0.393 * pixel.R + 0.769 * pixel.G + 0.189 * pixel.B;
+                    tg = 0.349 * pixel.R + 0.686 * pixel.G + 0.168 * pixel.B;
+                    tb = 0.272 * pixel.R + 0.534 * pixel.G + 0.131 * pixel.B;
+                    changed = Color.FromArgb((int)Math.Min(tr, 255), (int)Math.Min(tg, 255), (int)Math.Min(tb, 255));
                     processed.SetPixel(x, y, changed);
                 }
             }
             pictureBox2.Image = processed;
         }
 
-        private void buttonLoadImage_Click(object sender, EventArgs e)
-        {
-            openFileDialog1.ShowDialog();
-        }
-
-        private void buttonLoadedBackground_Click(object sender, EventArgs e)
-        {
-            openFileDialog2.ShowDialog();
-        }
-     
         private void buttonSubtract_Click(object sender, EventArgs e)
         {
             processed = new Bitmap(loaded.Width, loaded.Height);
 
-            Color green = Color.FromArgb(0, 255, 0);
-            int greygreen = (green.R + green.G + green.B) / 3;
-            int threshold = 5;
+            green = Color.FromArgb(0, 255, 0);
+            greygreen = (green.R + green.G + green.B) / 3;
+            threshold = 5;
 
             for (int x = 0; x < loaded.Width; x++)
             {
                 for (int y = 0; y < loaded.Height; y++)
                 {
-                    Color pixel = loaded.GetPixel(x, y);
-                    Color backPixel = loadedBackground.GetPixel(x, y);
-                    int grey = (pixel.R + pixel.G + pixel.B) / 3;
-                    int subtractValue = Math.Abs(grey - greygreen);
+                    pixel = loaded.GetPixel(x, y);
+                    backPixel = loadedBackground.GetPixel(x, y);
+                    grey = (pixel.R + pixel.G + pixel.B) / 3;
+                    subtractValue = Math.Abs(grey - greygreen);
                     if (subtractValue > threshold)
                         processed.SetPixel(x, y, pixel);
                     else
@@ -189,10 +191,68 @@ namespace DIP_part1_sinoyf1
             pictureBox2.Image = processed;
         }
 
+        // Buttons
+        private void buttonLoadImage_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.ShowDialog();
+        }
+
+        private void buttonLoadedBackground_Click(object sender, EventArgs e)
+        {
+            openFileDialog2.ShowDialog();
+        }
+
+        private void buttonGetCam_Click(object sender, EventArgs e)
+        {
+            cameras = DeviceManager.GetAllDevices();
+        }
+
+        private void buttonShowCam_Click(object sender, EventArgs e)
+        {
+            cameras[0].ShowWindow(pictureBox1);
+        }
+
+        private void buttonClose_Click(object sender, EventArgs e)
+        {
+            cameras[0].Stop();
+        }
+
         private void buttonSave_Click(object sender, EventArgs e)
         {
             saveFileDialog1.ShowDialog();
         }
 
+        // Timers
+        private void timerSubtraction_Tick(object sender, EventArgs e)
+        {
+            cameras[0].Sendmessage();
+            data = Clipboard.GetDataObject();
+            bmap = (Image)(data.GetData("System.Drawing.Bitmap", true));
+            b = new Bitmap(bmap);
+            processed = new Bitmap(b.Width, b.Height);
+            
+            green = Color.FromArgb(0, 255, 0);
+            greygreen = (green.R + green.G + green.B) / 3;
+            threshold = 5;
+
+            for (int x = 0; x < b.Width; x++)
+            {
+                for (int y = 0; y < b.Height; y++)
+                {
+                    pixel = b.GetPixel(x, y);
+
+                    if (x < loadedBackground.Width && x > 0)
+                        backPixel = loadedBackground.GetPixel(x, y);
+
+                    grey = (pixel.R + pixel.G + pixel.B) / 3;
+                    subtractValue = Math.Abs(grey - greygreen);
+                    if (subtractValue > threshold)
+                        processed.SetPixel(x, y, pixel);
+                    else
+                        processed.SetPixel(x, y, backPixel);
+                }
+            }
+            pictureBox2.Image = processed;
+        }
     }
 }
