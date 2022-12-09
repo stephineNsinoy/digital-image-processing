@@ -233,7 +233,7 @@ namespace DIP_part1_sinoyf1
             
             green = Color.FromArgb(0, 255, 0);
             greygreen = (green.R + green.G + green.B) / 3;
-            threshold = 5;
+            threshold = 10;
 
             for (int x = 0; x < b.Width; x++)
             {
